@@ -1,66 +1,98 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+import os
+import sys
+import math
 
-# C extensions
-*.so
+import array
 
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
+import statistics
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+from matplotlib import rc
+rc('font', family='Droid Sans', weight='normal', size=14)
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+import matplotlib.pyplot as plt
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*,cover
-.hypothesis/
 
-# Translations
-*.mo
-*.pot
+class WikiGraph:
 
-# Django stuff:
-*.log
+    def load_from_file(self, filename):
+        print('Загружаю граф из файла: ' + filename)
 
-# Sphinx documentation
-docs/_build/
+        with open(filename) as f:
+            (n, _nlinks) = (0, 0) # TODO: прочитать из файла
+            n, _nlinks=map(int,input().split())
+            self._titles = []
+            self._sizes = array.array('L', [0]*n)
+            self._links = array.array('L', [0]*_nlinks)
+            self._redirect = array.array('B', [0]*n)
+            self._offset = array.array('L', [0]*(n+1))
+            for i in range(n):
+                title=f.readline()
+                title=title.rstrip()
+                self._titles[i]=title
+                size, redirect,n=map(int,input().split())
+                self._sizes[i]=size
+                self._redirect[i]=redirect
+                for y in range(n):
+                    L=int(f.readline().rstrip())
+                    self._links[i+y]=L
+                if i:
+                    self._offset[i]=self._offset[i-1]+n
 
-# PyBuilder
-target/
 
-#Ipython Notebook
-.ipynb_checkpoints
+        print('Граф загружен')
 
-*.png
-*.gz
-*.txt
+    def get_number_of_links_from(self, _id):
+        return self._offset[_id+1]-self._offset[_id]
+
+    def get_links_from(self, _id):
+        g=self._links[self._offset[_id]:self._offset[_id+1]]
+        return g
+
+    def get_id(self, title):
+        for i in range(len(self._titles)):
+            if self._titles==title:
+                return i
+
+    def get_number_of_pages(self):
+        return len(self._titles)-self._redirect.count(0)
+
+    def is_redirect(self, _id):
+        if self._redirect[_id]:
+            return True
+        else:
+            return False
+
+
+
+    def get_title(self, _id):
+        return self._titles[_id]
+
+    def get_page_size(self, _id):
+        return self._sizes[_id]
+
+
+
+
+def hist(fname, data, bins, xlabel, ylabel, title, facecolor='green', alpha=0.5, transparent=True, **kwargs):
+    plt.clf()
+    # TODO: нарисовать гистограмму и сохранить в файл
+
+
+if __name__ == '__main__':
+
+    if len(sys.argv) != 2:
+        print('Использование: wiki_stats.py <файл с графом статей>')
+        sys.exit(-1)
+    min1=float('+inf')
+    if os.path.isfile(sys.argv[1]):
+        wg = WikiGraph()
+        wg.load_from_file(sys.argv[1])
+    else:
+        print('Файл с графом не найден')
+        sys.exit(-1)
+    print('количество статей с перенаправлением',wg._redirect.count(0))
+    for i in range(len(wg._sizes)):
+        if wg.get_number_of_links_from(i)<min1:
+            min1=wg.get_number_of_links_from(i)
+
+    print('минимальное количество ссылок из статьи',min1)
