@@ -18,9 +18,12 @@ class WikiGraph:
         print('Загружаю граф из файла: ' + filename)
 
         with open(filename) as f:
-            (n, _nlinks) = (0, 0) # TODO: прочитать из файла
-            n, _nlinks=map(int,input().split())
+            (n, _nlinks) = (0, 0)
+            k=f.readline()
+            k=k.rstrip()
+            n,_nlinks=map(int, k.split())
             self._titles = []
+            print(n, _nlinks)
             self._sizes = array.array('L', [0]*n)
             self._links = array.array('L', [0]*_nlinks)
             self._redirect = array.array('B', [0]*n)
@@ -28,8 +31,11 @@ class WikiGraph:
             for i in range(n):
                 title=f.readline()
                 title=title.rstrip()
-                self._titles[i]=title
-                size, redirect,n=map(int,input().split())
+                print(i)
+                self._titles.append(title)
+                g=f.readline()
+                g=g.rstrip()
+                size, redirect,n=map(int,g.split())
                 self._sizes[i]=size
                 self._redirect[i]=redirect
                 for y in range(n):
@@ -78,21 +84,13 @@ def hist(fname, data, bins, xlabel, ylabel, title, facecolor='green', alpha=0.5,
     # TODO: нарисовать гистограмму и сохранить в файл
 
 
-if __name__ == '__main__':
 
-    if len(sys.argv) != 2:
-        print('Использование: wiki_stats.py <файл с графом статей>')
-        sys.exit(-1)
-    min1=float('+inf')
-    if os.path.isfile(sys.argv[1]):
-        wg = WikiGraph()
-        wg.load_from_file(sys.argv[1])
-    else:
-        print('Файл с графом не найден')
-        sys.exit(-1)
-    print('количество статей с перенаправлением',wg._redirect.count(0))
-    for i in range(len(wg._sizes)):
+wg = WikiGraph()
+wg.load_from_file('wiki_small.txt')
+
+print('количество статей с перенаправлением',wg._redirect.count(0))
+for i in range(len(wg._sizes)):
         if wg.get_number_of_links_from(i)<min1:
             min1=wg.get_number_of_links_from(i)
 
-    print('минимальное количество ссылок из статьи',min1)
+print('минимальное количество ссылок из статьи',min1)
