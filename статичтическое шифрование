@@ -1,0 +1,59 @@
+__author__ = 'student'
+# -*- coding: utf8 -*-
+def saw(W,alphabet,Q,chang):
+        a=Q.count(chang)
+        if a==0:
+                f=(100,(alphabet[chang]-W[a+1])/2)
+        if a==len(Q)-1:
+                f=((W[a-1]-W[a]/2),0)
+        else:
+                f=((W[a-1]-W[a])/2,(alphabet[chang]-W[a+1])/2)
+        return f
+class Caesar:
+
+
+    W=[10.9,83,8.483,7.998,7.367,6.7,6.318,5.473,4.746,4.533,4.343,3.486,3.203,2.977,2.804,2.615,2.001,1.989,1.735,1.687,1.641,1.592,1.45,1.208,0.966,0.94,0.718,0.639,0.486,0.361,0.331,0.267,0.037,0.013]
+    Q=['о','е','а','и','н','т','с','р','в','л','к','','м','д','п','у','я','ы','ь','г','з','б','ч','й','х','ж','ш','ю','ц','щ','э','ф','ъ','ё']
+    alphabet=dict(zip(Q,W))
+    def __init__(self):
+        s=input()
+        A=[]
+        G=''
+        g=''
+        while s:
+            A.append(s)
+            for d in s:
+                if d in self.alphabet:
+                    g+=d
+            s=input()
+        Z={}
+        for chang in g:
+            if chang in self.alphabet:
+                Z[chang]=(g.count(chang)*100)/len(g)
+        self.decode={}
+        print(Z)
+        for chang in Z:
+            F=Z[chang]
+            for q in self.alphabet:
+
+                   H=self.alphabet[q]
+                   f=saw(self.W,self.alphabet,self.Q,q)
+                   if F==H:
+                     self.decode[chang]=q
+                     break
+                   if F>H and F-H<=f[1]:
+                     self.decode[chang]=q
+                     break
+                   if F<H and H-F<=f[0]:
+                     self.decode[chang]=q
+                     break
+        print(self.decode)
+        self.A=A
+    def _decode(self,line):
+        if len(line)==1:
+            return self.decode[line] if line in self.decode else line
+        else:
+            return ''.join([self._decode(char) for char in line])
+D=Caesar()
+for st in D.A:
+    print(D._decode(st))
