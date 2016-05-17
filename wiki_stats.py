@@ -8,10 +8,7 @@ import array
 
 import statistics
 
-from matplotlib import rc
-rc('font', family='Droid Sans', weight='normal', size=14)
 
-import matplotlib.pyplot as plt
 
 
 class WikiGraph:
@@ -21,134 +18,96 @@ class WikiGraph:
 
         with open(filename) as f:
             (n, _nlinks) = (0, 0)
-            k=f.readline()
-            k=k.rstrip()
-            n,_nlinks=map(int, k.split())
+            t=f.readlines()
+            for i in range(len(t[0])):
+                if t[0][i]==' ':
+                    n=int(t[0][0:i])
+                    _nlinks=int(t[0][i+1:])
+
+            self.n=n
             self._titles = []
-            print(n, _nlinks)
             self._sizes = array.array('L', [0]*n)
             self._links = array.array('L', [0]*_nlinks)
             self._redirect = array.array('B', [0]*n)
             self._offset = array.array('L', [0]*(n+1))
-            for i in range(n):
-                title=f.readline()
-                title=title.rstrip()
-                r=self._offset[i]
-                self._titles.append(title)
-                g=f.readline()
-                g=g.rstrip()
-                size, redirect,m=map(int,g.split())
-                self._sizes[i]=size
-                self._redirect[i]=redirect
+            l=0
+            for i in range(1,len(t)):
+                if (ord(t[i][0])>=65 and ord(t[i][0])<=90) or (ord(t[i][0])>=1040 and ord(t[i][0])<=1071):
+                    self._titles.append(t[i])
+                    self._sizes[l] = list(map(int, t[i+1].split()))[0]
+                    self._offset[l] = list(map(int, t[i+1].split()))[2]
+                    self._redirect[l] = list(map(int, t[i+1].split()))[1]
+                    l+=1
+                if (ord(t[i][0])<=65 and ord(t[i][0])>=90) or (ord(t[i][0])<=1040 and ord(t[i][0])>=1071) and (ord(t[i-1][0])<=65 and ord(t[i-1][0])>=90) or (ord(t[i-1][0])<=1040 and ord(t[i-1][0])>=1071):
+                    self._links[l-1].append(t[i])
 
-                for y in range(m):
-                    d=f.readline()
-                    d=d.rstrip()
-                    d=int(d)
-                    self._links[r+y]=d
-                self._offset[i+1]=r+m
-
-
+            # TODO: прочитать граф из файла
 
         print('Граф загружен')
 
     def get_number_of_links_from(self, _id):
-        return self._offset[_id+1]-self._offset[_id]
+        return self._offset[_id]
 
     def get_links_from(self, _id):
-        g=self._links[self._offset[_id]:self._offset[_id+1]]
-        return g
+        return self._links[_id]
 
     def get_id(self, title):
         for i in range(len(self._titles)):
-            if self._titles==title:
+            if self._titles[i]==title+'\n':
                 return i
+    def shlak(self):
+        return self._titles
 
     def get_number_of_pages(self):
-        return len(self._titles)-self._redirect.count(0)
+        return self.n
 
     def is_redirect(self, _id):
-        if self._redirect[_id]:
+        if self._redirect[_id]!=0:
             return True
         else:
             return False
 
-
-
     def get_title(self, _id):
-        return self._titles[_id]
+        return self._titles[_id][0:(len(self._titles[_id])-1)]
 
     def get_page_size(self, _id):
         return self._sizes[_id]
-
-
-
 
 def hist(fname, data, bins, xlabel, ylabel, title, facecolor='green', alpha=0.5, transparent=True, **kwargs):
     plt.clf()
     # TODO: нарисовать гистограмму и сохранить в файл
 
 
+if __name__ == '__main__':
+        wg = WikiGraph()
+        wg.load_from_file('wiki_small.txt')
+        k1=0
+        k2=0
+        k3=0
+        mn=wg._offset[0]
+        mx=wg._offset[0]
+        mx_id=None
+        num_ssil=0
+        for i in range(wg.get_number_of_pages()):
+            if wg.is_redirect(i)==True:
+                k1+=1
+            if wg._offset[i]<mn:
+                mn=wg._offset[i]
+            if wg._offset[i]>mx:
+                mx=wg._offset[i]
+            num_ssil+=wg.get_number_of_links_from(i)
+        for i in range(wg.get_number_of_pages()):
+            if wg._offset[i]==mn:
+                k2+=1
+            if wg._offset[i]==mx:
+                k3+=1
+                mx_id=i
+        print(wg.get_number_of_pages())
+        print('Количество статей с перенаправлением',k1,' ',(k1*100/wg.get_number_of_pages()),'%')
+        print('Минимальное количество ссылок из статьи',mn)
+        print('Количество статей с минимальным количеством ссылок',k2)
+        print('Максимальное количество ссылок из статьи',mx)
+        print('Количество статей с максимальным количеством ссылок',k3)
+        print('Статья с наибольшим количеством ссылок',wg.get_title(mx_id))
+        print('Среднее количество ссылок в статье',num_ssil/wg.get_number_of_pages())
 
-wg = WikiGraph()
-wg.load_from_file('wiki_small.txt')
-min1=float('+inf')
-min_sul=0
-print('количество статей с перенаправлением',len(wg._redirect)-wg._redirect.count(0))
-for i in range(len(wg._sizes)):
-        if wg.get_number_of_links_from(i)==min1:
-            min_sul+=1
-        if wg.get_number_of_links_from(i)<min1:
-            min_sul=1
-            min1=wg.get_number_of_links_from(i)
-
-
-print('минимальное количество ссылок из статьи',min1)
-print('Количесво ссылок с минимальным количеством ссылок',min_sul)
-min1=float('-inf')
-min_sul=0
-l=''
-print('количество статей с перенаправлением',len(wg._redirect)-wg._redirect.count(0))
-for i in range(len(wg._sizes)):
-        if wg.get_number_of_links_from(i)==min1:
-            min_sul+=1
-
-        if wg.get_number_of_links_from(i)>min1:
-            min_sul=1
-            min1=wg.get_number_of_links_from(i)
-            l=wg.get_title(i)
-
-print('максимальное количество ссылок из статьи',min1)
-print('количество статей с максимальным количеством ссылок',min_sul)
-print('статья с наибольшим количеством ссылок',l)
-sum=0
-
-for i in range(len(wg._sizes)):
-    sum+=int(wg.get_number_of_links_from(i))
-print('среднее количество ссылок в статье',sum/len(wg._sizes))
-
-
-
-min1=float('+inf')
-min_sul=0
-for i in range(len(wg._sizes)):
-        if wg.get_number_of_links_from(i)-wg._redirect[i]==min1:
-            min_sul+=1
-
-        if wg.get_number_of_links_from(i)-wg._redirect[i]<min1:
-            min_sul=1
-            min1=wg.get_number_of_links_from(i)
-
-print('минимальное количество ссылок на статью',min1)
-print('количество статей с минимальным количеством внешних ссылок',min_sul)
-Pe=max(wg._redirect)
-l=''
-suM=0
-for i in range(len(wg._redirect)):
-    if wg._redirect[i]==Pe:
-        l=wg.get_title(i)
-        suM+=1
-Sum=0
-for i in range(len(wg._redirect)):
-    Sum+=wg._redirect[i]
-print('среднее количество внешних перенаправлений на статью',Sum/len(wg._redirect))
